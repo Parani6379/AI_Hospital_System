@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card mb-6">
+    <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-user-md text-blue-500 mr-2"></i>Doctor Analytics & Burnout Detection</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="text-left px-4 py-3 text-gray-600">Doctor</th>
+                    <th class="text-left px-4 py-3 text-gray-600">Department</th>
+                    <th class="text-left px-4 py-3 text-gray-600">Appointments</th>
+                    <th class="text-left px-4 py-3 text-gray-600">Active Patients</th>
+                    <th class="text-left px-4 py-3 text-gray-600">Avg Hours/Day</th>
+                    <th class="text-left px-4 py-3 text-gray-600">Burnout Risk</th>
+                </tr>
+            </thead>
+            <tbody id="doctors-tbody">
+                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="card">
+        <h3 class="font-semibold text-gray-700 mb-4">Burnout Risk Distribution</h3>
+        <canvas id="burnoutChart" height="250"></canvas>
+    </div>
+    <div class="card">
+        <h3 class="font-semibold text-gray-700 mb-4">Workload Overview</h3>
+        <canvas id="workloadChart" height="250"></canvas>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('page-title').textContent    = 'Analytics';
+document.getElementById('page-subtitle').textContent = 'Doctor performance & burnout prediction';
+
+async function loadAnalytics() {
+    const data = await apiFetch('/api/analytics/doctors');
+    if (!data) return;
+    const tbody = document.getElementById('doctors-tbody');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No doctor data</td></tr>'; return; }
+    tbody.innerHTML = data.map(d => `
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">${d.doctor_name}</td>
+            <td class="px-4 py-3 text-gray-600">${d.department}</td>
+            <td class="px-4 py-3 text-gray-600">${d.total_appointments}</td>
+            <td class="px-4 py-3 text-gray-600">${d.active_patients}</td>
+            <td class="px-4 py-3 text-gray-600">${d.avg_hours_per_day}h</td>
+            <td class="px-4 py-3">
+                <span class="${d.burnout_risk==='high'?'badge-critical':d.burnout_risk==='medium'?'badge-moderate':'badge-stable'}">
+                    ${d.burnout_risk}</span>
+            </td>
+        </tr>`).join('');
+
+    const counts = { low: 0, medium: 0, high: 0 };
+    data.forEach(d => counts[d.burnout_risk]++);
+    new Chart(document.getElementById('burnoutChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Low Risk','Medium Risk','High Risk'],
+            datasets: [{ data: [counts.low, counts.medium, counts.high],
+                backgroundColor: ['#10B981','#F59E0B','#EF4444'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+    new Chart(document.getElementById('workloadChart'), {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.doctor_name.split(' ')[1] || d.doctor_name),
+            datasets: [{
+                label: 'Avg Hours/Day',
+                data: data.map(d => d.avg_hours_per_day),
+                backgroundColor: data.map(d => d.burnout_risk==='high'?'#EF4444':d.burnout_risk==='medium'?'#F59E0B':'#10B981')
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: true, max: 14 } } }
+    });
+}
+document.addEventListener('DOMContentLoaded', loadAnalytics);
+</script>
+{% endblock %}

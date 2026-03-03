@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIHAS - Hospital Automation System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar-link { display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:8px; color:#d1d5db; text-decoration:none; transition:all 0.2s; font-size:14px; white-space:nowrap; overflow:hidden; }
+        .sidebar-link:hover { background:#374151; color:#ffffff; }
+        .sidebar-link.active { background:#2563eb; color:#ffffff; }
+        .card { background:#ffffff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border:1px solid #f3f4f6; padding:24px; }
+        .btn-primary { background:#2563eb; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; transition:background 0.2s; }
+        .btn-primary:hover { background:#1d4ed8; }
+        .btn-danger  { background:#ef4444; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; }
+        .btn-danger:hover  { background:#dc2626; }
+        .btn-success { background:#22c55e; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; }
+        .btn-success:hover { background:#16a34a; }
+        .badge-critical { background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+        .badge-moderate { background:#fef9c3; color:#a16207; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+        .badge-stable   { background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+
+        /* Sidebar transition */
+        #sidebar { width: 240px; transition: width 0.25s ease; overflow: hidden; flex-shrink: 0; }
+        #sidebar.collapsed { width: 64px; }
+
+        /* Hide text labels when collapsed */
+        #sidebar.collapsed .nav-label { display: none; }
+        #sidebar.collapsed .sidebar-link { justify-content: center; padding: 10px; gap: 0; }
+        #sidebar.collapsed .brand-text { display: none; }
+        #sidebar.collapsed .user-info  { display: none; }
+        #sidebar.collapsed .logout-label { display: none; }
+        #sidebar.collapsed #toggle-btn { justify-content: center; }
+
+        /* Tooltip on hover when collapsed */
+        #sidebar.collapsed .sidebar-link { position: relative; }
+        #sidebar.collapsed .sidebar-link:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 70px;
+            background: #1f2937;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+<!-- Sidebar -->
+<aside id="sidebar" class="bg-gray-900 flex flex-col h-full">
+
+    <!-- Brand -->
+    <div class="p-4 border-b border-gray-700 flex items-center gap-3 min-h-[65px]">
+        <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-hospital text-white"></i>
+        </div>
+        <div class="brand-text overflow-hidden">
+            <h1 class="text-white font-bold text-base leading-none">AIHAS</h1>
+            <p class="text-gray-400 text-xs mt-0.5">Hospital AI System</p>
+        </div>
+    </div>
+
+    <!-- Toggle Button -->
+    <button id="toggle-btn" onclick="toggleSidebar()"
+        class="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-gray-700 transition-all text-sm border-b border-gray-700">
+        <i id="toggle-icon" class="fas fa-chevron-left text-xs flex-shrink-0"></i>
+        <span class="nav-label text-xs">Collapse Menu</span>
+    </button>
+
+    <!-- Nav Links -->
+    <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
+        <a href="/dashboard"    class="sidebar-link" data-page="dashboard"    data-tooltip="Dashboard">
+            <i class="fas fa-th-large flex-shrink-0"></i><span class="nav-label">Dashboard</span></a>
+        <a href="/patients"     class="sidebar-link" data-page="patients"     data-tooltip="Patients">
+            <i class="fas fa-procedures flex-shrink-0"></i><span class="nav-label">Patients</span></a>
+        <a href="/beds"         class="sidebar-link" data-page="beds"         data-tooltip="Bed Management">
+            <i class="fas fa-bed flex-shrink-0"></i><span class="nav-label">Bed Management</span></a>
+        <a href="/emergency"    class="sidebar-link" data-page="emergency"    data-tooltip="Emergency">
+            <i class="fas fa-ambulance flex-shrink-0"></i><span class="nav-label">Emergency</span></a>
+        <a href="/vitals"       class="sidebar-link" data-page="vitals"       data-tooltip="Vitals Monitor">
+            <i class="fas fa-heartbeat flex-shrink-0"></i><span class="nav-label">Vitals Monitor</span></a>
+        <a href="/pharmacy"     class="sidebar-link" data-page="pharmacy"     data-tooltip="Pharmacy">
+            <i class="fas fa-pills flex-shrink-0"></i><span class="nav-label">Pharmacy</span></a>
+        <a href="/appointments" class="sidebar-link" data-page="appointments" data-tooltip="Appointments">
+            <i class="fas fa-calendar-check flex-shrink-0"></i><span class="nav-label">Appointments</span></a>
+        <a href="/records"      class="sidebar-link" data-page="records"      data-tooltip="Medical Records">
+            <i class="fas fa-file-medical flex-shrink-0"></i><span class="nav-label">Medical Records</span></a>
+        <a href="/analytics"    class="sidebar-link" data-page="analytics"    data-tooltip="Analytics">
+            <i class="fas fa-chart-bar flex-shrink-0"></i><span class="nav-label">Analytics</span></a>
+    </nav>
+
+    <!-- User + Logout -->
+    <div class="p-3 border-t border-gray-700">
+        <div class="flex items-center gap-3 mb-2 px-1">
+            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-user text-white text-xs"></i>
+            </div>
+            <div class="user-info overflow-hidden">
+                <p id="sidebar-name" class="text-white text-sm font-medium truncate leading-none">Loading...</p>
+                <p id="sidebar-role" class="text-gray-400 text-xs capitalize mt-0.5"></p>
+            </div>
+        </div>
+        <button onclick="logout()"
+            class="sidebar-link w-full text-left text-red-400 hover:text-red-300 hover:bg-red-900/20"
+            data-tooltip="Logout">
+            <i class="fas fa-sign-out-alt flex-shrink-0"></i>
+            <span class="logout-label nav-label">Logout</span>
+        </button>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div>
+            <h2 id="page-title"    class="text-xl font-bold text-gray-800">Dashboard</h2>
+            <p id="page-subtitle"  class="text-sm text-gray-500">AI-powered hospital management</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="alert-badge" class="hidden bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+                <i class="fas fa-bell mr-1"></i><span id="alert-count">0</span> Alerts
+            </span>
+            <span class="text-sm text-gray-400 font-mono" id="current-time"></span>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="flex-1 overflow-y-auto p-6">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<script>
+const API = '';
+function getToken() { return localStorage.getItem('aihas_token'); }
+function getUser()  { return JSON.parse(localStorage.getItem('aihas_user') || '{}'); }
+
+async function logout() {
+    const token = getToken();
+    // Clear local storage immediately
+    localStorage.removeItem('aihas_token');
+    localStorage.removeItem('aihas_user');
+    // Tell server to clear DB session
+    if (token) {
+        try {
+            await fetch('/api/auth/logout', {
+                method:  'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type':  'application/json'
+                }
+            });
+        } catch(e) {
+            console.log('Server logout failed but local session cleared');
+        }
+    }
+    window.location.href = '/login';
+}
+
+async function apiFetch(url, opts = {}) {
+    const token = getToken();
+    opts.headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...opts.headers
+    };
+    const res = await fetch(API + url, opts);
+    if (res.status === 401) { logout(); return null; }
+    return res.json();
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const icon    = document.getElementById('toggle-icon');
+    sidebar.classList.toggle('collapsed');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    icon.className = isCollapsed
+        ? 'fas fa-chevron-right text-xs flex-shrink-0'
+        : 'fas fa-chevron-left text-xs flex-shrink-0';
+    localStorage.setItem('sidebar_collapsed', isCollapsed);
+}
+
+function initPage() {
+    if (!getToken() && window.location.pathname !== '/login') {
+        window.location.href = '/login'; return;
+    }
+
+    // Restore collapsed state
+    const wasCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+    if (wasCollapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('toggle-icon').className = 'fas fa-chevron-right text-xs flex-shrink-0';
+    }
+
+    const user = getUser();
+    document.getElementById('sidebar-name').textContent = user.name || 'User';
+    document.getElementById('sidebar-role').textContent = user.role || '';
+
+    const path = window.location.pathname.replace('/', '') || 'dashboard';
+    document.querySelectorAll('[data-page]').forEach(el => {
+        el.classList.toggle('active', el.dataset.page === path);
+    });
+
+    setInterval(() => {
+        document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+}
+
+async function loadAlertCount() {
+    const data = await apiFetch('/api/vitals/alerts/recent');
+    if (data && data.length > 0) {
+        document.getElementById('alert-badge').classList.remove('hidden');
+        document.getElementById('alert-count').textContent = data.length;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initPage();
+    loadAlertCount();
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

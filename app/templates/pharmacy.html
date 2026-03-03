@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div class="flex gap-2">
+        <button onclick="loadStock(false)" id="f-all" class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">All Stock</button>
+        <button onclick="loadStock(true)"  id="f-low" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">
+            <i class="fas fa-exclamation-triangle mr-1 text-red-500"></i>Low Stock Alerts</button>
+    </div>
+    <button onclick="autoProcurement()" style="background:#7c3aed;color:#fff;padding:8px 16px;border-radius:8px;font-weight:500;border:none;cursor:pointer;">
+        <i class="fas fa-robot mr-2"></i>AI Auto Procurement</button>
+</div>
+
+<div class="card p-0 overflow-hidden mb-6">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b">
+            <tr>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Medicine</th>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Category</th>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Stock</th>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Threshold</th>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Status</th>
+                <th class="text-left px-4 py-3 text-gray-600 font-semibold">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="meds-tbody">
+            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="proc-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-screen overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-5">
+            <div>
+                <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-robot mr-2" style="color:#7c3aed"></i>AI Procurement Orders</h3>
+                <p class="text-sm text-gray-500">Auto-generated from 7-day demand forecast</p>
+            </div>
+            <button onclick="closeProcModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div id="proc-orders" class="space-y-3 mb-5"></div>
+        <div class="flex gap-3">
+            <button onclick="confirmProcurement()" class="btn-primary flex-1"><i class="fas fa-check mr-2"></i>Confirm All & Restock</button>
+            <button onclick="closeProcModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('page-title').textContent    = 'Pharmacy';
+document.getElementById('page-subtitle').textContent = 'AI demand forecasting & auto procurement';
+let currentOrders = [];
+
+async function loadStock(alertsOnly=false) {
+    const data = await apiFetch(alertsOnly?'/api/pharmacy/alerts':'/api/pharmacy/stock');
+    ['f-all','f-low'].forEach(id => {
+        document.getElementById(id).className='px-4 py-2 rounded-lg text-sm font-medium '+(id===(alertsOnly?'f-low':'f-all')?'bg-blue-600 text-white':'bg-gray-200 text-gray-600');
+    });
+    const tbody=document.getElementById('meds-tbody');
+    if (!data||!data.length){tbody.innerHTML='<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No medicines found</td></tr>';return;}
+    tbody.innerHTML=data.map(m=>`
+        <tr class="border-b border-gray-100 hover:bg-gray-50 ${m.is_low?'bg-red-50':''}">
+            <td class="px-4 py-3"><p class="font-medium text-gray-800">${m.name}</p><p class="text-xs text-gray-400">#${m.id}</p></td>
+            <td class="px-4 py-3 text-gray-600">${m.category||'—'}</td>
+            <td class="px-4 py-3">
+                <span class="font-bold text-lg ${m.is_low?'text-red-600':'text-gray-800'}">${m.stock}</span>
+                <span class="text-xs text-gray-400 ml-1">${m.unit}</span>
+                <div class="w-24 bg-gray-200 rounded-full h-1.5 mt-1">
+                    <div class="${m.is_low?'bg-red-500':'bg-green-500'} h-1.5 rounded-full" style="width:${Math.min(m.stock/m.threshold*100,100)}%"></div>
+                </div>
+            </td>
+            <td class="px-4 py-3 text-gray-600">${m.threshold} ${m.unit}</td>
+            <td class="px-4 py-3">${m.is_low?'<span class="badge-critical"><i class="fas fa-exclamation-triangle mr-1"></i>Low Stock</span>':'<span class="badge-stable">Normal</span>'}</td>
+            <td class="px-4 py-3">
+                <div class="flex gap-1">
+                    <button onclick="forecast(${m.id},'${m.name}')" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded"><i class="fas fa-chart-line mr-1"></i>Forecast</button>
+                    <button onclick="restock(${m.id})" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded"><i class="fas fa-plus mr-1"></i>Restock</button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+async function forecast(mid,name) {
+    const res=await apiFetch(`/api/pharmacy/forecast/${mid}`);
+    if(!res)return;
+    alert(`📊 7-Day AI Forecast — ${name}\n\nDaily: ${res.forecast_7days.join(', ')} units\nTotal needed: ${res.total_needed}\nCurrent stock: ${res.current_stock}\nDays remaining: ~${res.days_remaining}\n\n${res.alert?'⚠️ REORDER REQUIRED':'✅ Stock sufficient'}`);
+}
+
+async function restock(mid) {
+    const qty=prompt('Enter quantity to add:');
+    if(!qty||isNaN(qty)||+qty<=0)return;
+    const res=await apiFetch('/api/pharmacy/restock',{method:'POST',body:JSON.stringify({medicine_id:mid,quantity:+qty})});
+    if(res)loadStock(false);
+}
+
+async function autoProcurement() {
+    const res=await apiFetch('/api/pharmacy/procurement/auto',{method:'POST'});
+    if(!res||!res.procurement_orders)return;
+    currentOrders=res.procurement_orders;
+    if(!currentOrders.length){alert('✅ All medicines are sufficiently stocked!');return;}
+    document.getElementById('proc-orders').innerHTML=currentOrders.map(o=>`
+        <div class="flex items-center justify-between p-4 rounded-xl border-2 ${o.priority==='URGENT'?'border-red-200 bg-red-50':'border-orange-200 bg-orange-50'}">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <p class="font-semibold text-gray-800">${o.medicine_name}</p>
+                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${o.priority==='URGENT'?'bg-red-200 text-red-700':'bg-orange-200 text-orange-700'}">${o.priority}</span>
+                </div>
+                <p class="text-xs text-gray-500">Stock: <strong>${o.current_stock}</strong> · Threshold: ${o.threshold} · 7-day need: ${o.forecast_need}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-2xl font-bold text-gray-800">${o.order_quantity}</p>
+                <p class="text-xs text-gray-500">units to order</p>
+            </div>
+        </div>`).join('');
+    document.getElementById('proc-modal').classList.remove('hidden');
+}
+
+function closeProcModal(){document.getElementById('proc-modal').classList.add('hidden');currentOrders=[];}
+
+async function confirmProcurement() {
+    const res=await apiFetch('/api/pharmacy/procurement/confirm',{method:'POST',body:JSON.stringify({orders:currentOrders})});
+    if(res){closeProcModal();alert(`✅ ${res.message}`);loadStock(false);}
+}
+
+document.addEventListener('DOMContentLoaded',()=>loadStock(false));
+</script>
+{% endblock %}

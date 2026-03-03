@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <div class="flex gap-2">
+        <button onclick="filterAppts('all')"       id="f-all"       class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">All</button>
+        <button onclick="filterAppts('scheduled')" id="f-scheduled" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Scheduled</button>
+        <button onclick="filterAppts('completed')" id="f-completed" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Completed</button>
+        <button onclick="filterAppts('cancelled')" id="f-cancelled" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Cancelled</button>
+    </div>
+    <button onclick="openModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>New Appointment</button>
+</div>
+
+<div class="grid grid-cols-3 gap-4 mb-6" id="appt-stats"></div>
+
+<div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Patient</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Doctor</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Department</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Slot Time</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Est. Wait</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Status</th>
+                    <th class="text-left px-4 py-3 text-gray-600 font-semibold">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="appts-tbody">
+                <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="add-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-gray-800">New Appointment</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="space-y-3">
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Patient</label>
+                <select id="a-patient" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Select patient...</option>
+                </select></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Doctor</label>
+                <select id="a-doctor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="">Select doctor...</option>
+                </select></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Date & Time</label>
+                <input id="a-slot" type="datetime-local" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
+            <div><label class="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                <textarea id="a-notes" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Reason for visit..."></textarea></div>
+        </div>
+        <div class="flex gap-3 mt-5">
+            <button onclick="submitAppt()" class="btn-primary flex-1"><i class="fas fa-save mr-2"></i>Book Appointment</button>
+            <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('page-title').textContent    = 'Appointments';
+document.getElementById('page-subtitle').textContent = 'Patient scheduling & queue management';
+let currentFilter = 'all';
+
+async function loadAppointments(status) {
+    const url = status && status !== 'all' ? `/api/appointments?status=${status}` : '/api/appointments';
+    const data = await apiFetch(url);
+    const all  = await apiFetch('/api/appointments');
+    if (all) {
+        const s = all.filter(a=>a.status==='scheduled').length;
+        const c = all.filter(a=>a.status==='completed').length;
+        const x = all.filter(a=>a.status==='cancelled').length;
+        document.getElementById('appt-stats').innerHTML = [
+            {label:'Scheduled',val:s,color:'blue', icon:'calendar-check'},
+            {label:'Completed',val:c,color:'green',icon:'check-circle'},
+            {label:'Cancelled',val:x,color:'red',  icon:'times-circle'},
+        ].map(s=>`<div class="card flex items-center gap-4 p-4">
+            <div class="w-10 h-10 bg-${s.color}-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-${s.icon} text-${s.color}-600"></i></div>
+            <div><p class="text-xs text-gray-500">${s.label}</p>
+                 <p class="text-xl font-bold text-gray-800">${s.val}</p></div>
+        </div>`).join('');
+    }
+    const tbody = document.getElementById('appts-tbody');
+    if (!data || !data.length) { tbody.innerHTML=`<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No appointments found</td></tr>`; return; }
+    tbody.innerHTML = data.map(a=>`
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="px-4 py-3"><p class="font-medium text-gray-800">${a.patient_name||'—'}</p><p class="text-xs text-gray-400">#${a.patient_id}</p></td>
+            <td class="px-4 py-3 text-gray-700">${a.doctor_name||'—'}</td>
+            <td class="px-4 py-3 text-gray-500 text-xs">${a.department||'—'}</td>
+            <td class="px-4 py-3 text-gray-600">${a.slot_time?new Date(a.slot_time).toLocaleString():'—'}</td>
+            <td class="px-4 py-3 text-gray-600">${a.wait_time?a.wait_time+' min':'—'}</td>
+            <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-semibold
+                ${a.status==='scheduled'?'bg-blue-100 text-blue-700':a.status==='completed'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">
+                ${a.status}</span></td>
+            <td class="px-4 py-3">
+                <div class="flex gap-1">
+                ${a.status==='scheduled'?`
+                    <button onclick="updateStatus(${a.id},'completed')" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded" title="Complete"><i class="fas fa-check"></i></button>
+                    <button onclick="updateStatus(${a.id},'cancelled')" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded" title="Cancel"><i class="fas fa-times"></i></button>`:''}
+                    <button onclick="deleteAppt(${a.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>`).join('');
+}
+
+function filterAppts(f) {
+    currentFilter = f;
+    ['all','scheduled','completed','cancelled'].forEach(k => {
+        document.getElementById(`f-${k}`).className = `px-4 py-2 rounded-lg text-sm font-medium ${k===f?'bg-blue-600 text-white':'bg-gray-200 text-gray-600'}`;
+    });
+    loadAppointments(f);
+}
+
+async function openModal() {
+    document.getElementById('add-modal').classList.remove('hidden');
+    const [patients, doctors] = await Promise.all([apiFetch('/api/patients?status=admitted'), apiFetch('/api/doctors')]);
+    document.getElementById('a-patient').innerHTML = '<option value="">Select patient...</option>' +
+        (patients||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    document.getElementById('a-doctor').innerHTML = '<option value="">Select doctor...</option>' +
+        (doctors||[]).map(d=>`<option value="${d.id}">${d.name} — ${d.department}</option>`).join('');
+    document.getElementById('a-slot').value = new Date(Date.now()+3600000).toISOString().slice(0,16);
+}
+function closeModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+async function submitAppt() {
+    const pid=document.getElementById('a-patient').value, did=document.getElementById('a-doctor').value, slot=document.getElementById('a-slot').value;
+    if (!pid||!did||!slot) { alert('Please fill all required fields'); return; }
+    const res = await apiFetch('/api/appointments',{method:'POST',body:JSON.stringify({patient_id:+pid,doctor_id:+did,slot_time:slot,notes:document.getElementById('a-notes').value})});
+    if (res&&res.id) { closeModal(); alert(`✅ Appointment booked!\nEstimated wait: ${res.wait_time} minutes`); loadAppointments(currentFilter); }
+}
+async function updateStatus(aid,status) { await apiFetch(`/api/appointments/${aid}`,{method:'PUT',body:JSON.stringify({status})}); loadAppointments(currentFilter); }
+async function deleteAppt(aid) { if(!confirm('Delete this appointment?'))return; await apiFetch(`/api/appointments/${aid}`,{method:'DELETE'}); loadAppointments(currentFilter); }
+document.addEventListener('DOMContentLoaded', ()=>loadAppointments('all'));
+</script>
+{% endblock %}

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIHAS – Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 flex items-center justify-center p-4">
+<div class="w-full max-w-md">
+    <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <i class="fas fa-hospital text-blue-600 text-4xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white">AIHAS</h1>
+        <p class="text-blue-200 mt-1">AI Hospital Automation System</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+        <!-- Error message -->
+        <div id="error-msg" class="hidden mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm"></div>
+
+        <!-- Already logged in panel (hidden by default) -->
+        <div id="session-panel" class="hidden mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <p class="text-orange-700 font-semibold text-sm mb-2">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                Already logged in on another device
+            </p>
+            <p class="text-orange-600 text-xs mb-3">Enter your email below and click "Force Logout Other Device" to clear the old session.</p>
+            <button onclick="forceLogout()"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg text-sm font-medium">
+                <i class="fas fa-sign-out-alt mr-2"></i>Force Logout Other Device & Login Here
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                    <input id="email" type="email" placeholder="doctor@hospital.com"
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                    <input id="password" type="password" placeholder="••••••••"
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                </div>
+            </div>
+            <button onclick="doLogin()" id="login-btn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </div>
+
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <p class="text-xs font-semibold text-gray-500 mb-2">DEMO CREDENTIALS</p>
+            <div class="space-y-1 text-xs text-gray-600">
+                <p><span class="font-medium">Admin:</span> admin@hospital.com / admin123</p>
+                <p><span class="font-medium">Doctor:</span> doctor@hospital.com / doctor123</p>
+                <p><span class="font-medium">Nurse:</span> nurse@hospital.com / nurse123</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function doLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('login-btn');
+
+    if (!email || !password) { showError('Please enter email and password'); return; }
+
+    btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+    btn.disabled   = true;
+
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('aihas_token', data.token);
+            localStorage.setItem('aihas_user',  JSON.stringify(data));
+            window.location.href = '/dashboard';
+        } else if (res.status === 403) {
+            // Show force logout panel instead of just error
+            document.getElementById('session-panel').classList.remove('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+        } else {
+            showError(data.error || 'Login failed');
+        }
+    } catch(e) {
+        showError('Connection error. Is the server running?');
+    } finally {
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+        btn.disabled  = false;
+    }
+}
+
+async function forceLogout() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) { showError('Enter your email first'); return; }
+
+    try {
+        // Clear old session from DB
+        const res = await fetch('/api/auth/clear-session', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ email })
+        });
+
+        if (res.ok) {
+            // Hide panel and try login again
+            document.getElementById('session-panel').classList.add('hidden');
+            await doLogin();
+        } else {
+            showError('Could not clear session. Try again.');
+        }
+    } catch(e) {
+        showError('Connection error');
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

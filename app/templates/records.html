@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-4">
+        <div class="card">
+            <div class="flex gap-3">
+                <input id="r-pid" type="number" placeholder="Enter Patient ID..."
+                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <button onclick="loadRecords()" class="btn-primary"><i class="fas fa-search mr-2"></i>Load Records</button>
+                <button onclick="loadAllRecords()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">All Records</button>
+            </div>
+        </div>
+        <div class="card p-0 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-700" id="records-title">Medical Records</h3>
+                <span id="records-count" class="text-xs text-gray-400"></span>
+            </div>
+            <div id="records-list" class="divide-y divide-gray-100 max-h-screen overflow-y-auto">
+                <div class="px-4 py-8 text-center text-gray-400 text-sm">Enter a patient ID or click "All Records"</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="card">
+            <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-file-medical text-blue-500 mr-2"></i>Add Record</h3>
+            <div class="space-y-3">
+                <div><label class="block text-xs font-medium text-gray-600 mb-1">Patient ID *</label>
+                    <input id="nr-pid" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="1"></div>
+                <div><label class="block text-xs font-medium text-gray-600 mb-1">Doctor</label>
+                    <select id="nr-doctor" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Select doctor...</option></select></div>
+                <div><label class="block text-xs font-medium text-gray-600 mb-1">Record Type</label>
+                    <select id="nr-type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="consultation">Consultation</option>
+                        <option value="lab_result">Lab Result</option>
+                        <option value="imaging">Imaging / X-Ray</option>
+                        <option value="surgery">Surgery</option>
+                        <option value="discharge_summary">Discharge Summary</option>
+                        <option value="prescription">Prescription</option>
+                    </select></div>
+                <div><label class="block text-xs font-medium text-gray-600 mb-1">Clinical Notes</label>
+                    <textarea id="nr-notes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Diagnosis, observations..."></textarea></div>
+                <div><label class="block text-xs font-medium text-gray-600 mb-1">Prescription</label>
+                    <textarea id="nr-presc" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Medicines, dosage..."></textarea></div>
+                <button onclick="submitRecord()" class="btn-primary w-full"><i class="fas fa-lock mr-2"></i>Save & Hash Record</button>
+            </div>
+            <div id="nr-result" class="hidden mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-green-700 text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Saved with SHA-256 hash</p>
+                <p id="nr-hash" class="text-xs text-gray-500 mt-1 break-all font-mono"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="font-bold text-gray-800 mb-3"><i class="fas fa-shield-alt text-purple-500 mr-2"></i>Verify Integrity</h3>
+            <div class="flex gap-2">
+                <input id="v-rid" type="number" placeholder="Record ID"
+                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <button onclick="verifyRecord()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm">Verify</button>
+            </div>
+            <div id="v-result" class="hidden mt-3 p-3 rounded-lg text-xs"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('page-title').textContent    = 'Medical Records';
+document.getElementById('page-subtitle').textContent = 'Blockchain-hashed tamper-proof records';
+
+async function loadDoctors() {
+    const doctors = await apiFetch('/api/doctors');
+    if (doctors) {
+        document.getElementById('nr-doctor').innerHTML = '<option value="">Select doctor...</option>' +
+            doctors.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+    }
+}
+
+async function loadRecords() {
+    const pid = document.getElementById('r-pid').value;
+    if (!pid) { alert('Enter a patient ID'); return; }
+    renderRecords(await apiFetch(`/api/records/${pid}`), `Records — Patient #${pid}`);
+}
+
+async function loadAllRecords() {
+    renderRecords(await apiFetch('/api/records/all'), 'All Medical Records');
+}
+
+function renderRecords(data, title) {
+    document.getElementById('records-title').textContent = title;
+    const list = document.getElementById('records-list');
+    if (!data||!data.length) {
+        list.innerHTML='<div class="px-4 py-8 text-center text-gray-400 text-sm">No records found</div>';
+        document.getElementById('records-count').textContent='0 records'; return;
+    }
+    document.getElementById('records-count').textContent=`${data.length} record(s)`;
+    list.innerHTML = data.map(r=>`
+        <div class="p-4 hover:bg-gray-50">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">${r.record_type}</span>
+                        <span class="text-xs text-gray-400">#${r.id}</span>
+                        ${r.patient_name?`<span class="text-xs text-gray-500">· ${r.patient_name}</span>`:''}
+                    </div>
+                    ${r.notes?`<p class="text-sm text-gray-700 mb-1">${r.notes}</p>`:''}
+                    ${r.prescription?`<p class="text-xs text-gray-500"><i class="fas fa-pills mr-1 text-green-500"></i>${r.prescription}</p>`:''}
+                    <div class="flex items-center gap-3 mt-2">
+                        <p class="text-xs text-gray-400"><i class="fas fa-user-md mr-1"></i>${r.doctor_name||'Unknown'}</p>
+                        <p class="text-xs text-gray-400"><i class="fas fa-clock mr-1"></i>${new Date(r.created_at).toLocaleString()}</p>
+                    </div>
+                    <p class="text-xs font-mono text-gray-300 mt-1 truncate">${r.record_hash?r.record_hash.substring(0,40)+'...':'—'}</p>
+                </div>
+                <button onclick="quickVerify(${r.id})" class="flex-shrink-0 text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded" title="Verify">
+                    <i class="fas fa-shield-alt"></i></button>
+            </div>
+        </div>`).join('');
+}
+
+async function submitRecord() {
+    const pid = document.getElementById('nr-pid').value;
+    if (!pid) { alert('Enter patient ID'); return; }
+    const res = await apiFetch('/api/records', {method:'POST', body:JSON.stringify({
+        patient_id: +pid,
+        doctor_id:  +document.getElementById('nr-doctor').value||null,
+        record_type:document.getElementById('nr-type').value,
+        notes:      document.getElementById('nr-notes').value,
+        prescription:document.getElementById('nr-presc').value,
+    })});
+    if (res&&res.id) {
+        document.getElementById('nr-result').classList.remove('hidden');
+        document.getElementById('nr-hash').textContent = res.record_hash;
+        document.getElementById('nr-notes').value='';
+        document.getElementById('nr-presc').value='';
+    }
+}
+
+async function verifyRecord() {
+    const rid = document.getElementById('v-rid').value;
+    if (!rid) return;
+    const res = await apiFetch(`/api/records/${rid}/verify`);
+    const div = document.getElementById('v-result');
+    div.classList.remove('hidden');
+    if (res&&res.is_valid) {
+        div.className='mt-3 p-3 rounded-lg text-xs bg-green-50 border border-green-200 text-green-700';
+        div.innerHTML=`<i class="fas fa-check-circle mr-1"></i><strong>Valid</strong> — Record #${rid} is tamper-proof.<br><span class="font-mono text-gray-500 break-all">${res.hash}</span>`;
+    } else if (res) {
+        div.className='mt-3 p-3 rounded-lg text-xs bg-red-50 border border-red-200 text-red-700';
+        div.innerHTML=`<i class="fas fa-exclamation-triangle mr-1"></i><strong>INVALID</strong> — Record may have been tampered!`;
+    }
+}
+
+async function quickVerify(rid) {
+    document.getElementById('v-rid').value = rid;
+    await verifyRecord();
+    document.getElementById('v-result').scrollIntoView({behavior:'smooth'});
+}
+
+document.addEventListener('DOMContentLoaded', loadDoctors);
+</script>
+{% endblock %}

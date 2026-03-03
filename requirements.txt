@@ -1,0 +1,9 @@
+flask
+scikit-learn
+pandas
+numpy
+python-dotenv
+requests
+Werkzeug
+joblib
+PyJWT
