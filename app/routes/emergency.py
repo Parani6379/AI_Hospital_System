@@ -12,7 +12,9 @@ def emergency_page():
 @emergency_bp.route('/api/emergency/assess', methods=['POST'])
 @token_required
 def assess():
-    d     = request.get_json()
+    d = request.get_json()
+    if not d:
+        return jsonify({'error': 'Request body required'}), 400
     score = severity_model.predict(
         d.get('heart_rate', 75), d.get('bp_systolic', 120),
         d.get('oxygen_level', 98), d.get('temperature', 37.0),
@@ -30,9 +32,11 @@ def assess():
 @token_required
 def queue():
     conn = get_db()
-    rows = conn.execute(
-        "SELECT * FROM patients WHERE status IN ('emergency','admitted') "
-        "ORDER BY severity_score DESC LIMIT 20"
-    ).fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
+    try:
+        rows = conn.execute(
+            "SELECT * FROM patients WHERE status IN ('emergency','admitted') "
+            "ORDER BY severity_score DESC LIMIT 20"
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+    finally:
+        conn.close()

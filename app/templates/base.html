@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,34 +9,152 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        .sidebar-link { display:flex; align-items:center; gap:12px; padding:10px 16px; border-radius:8px; color:#d1d5db; text-decoration:none; transition:all 0.2s; font-size:14px; white-space:nowrap; overflow:hidden; }
-        .sidebar-link:hover { background:#374151; color:#ffffff; }
-        .sidebar-link.active { background:#2563eb; color:#ffffff; }
-        .card { background:#ffffff; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); border:1px solid #f3f4f6; padding:24px; }
-        .btn-primary { background:#2563eb; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; transition:background 0.2s; }
-        .btn-primary:hover { background:#1d4ed8; }
-        .btn-danger  { background:#ef4444; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; }
-        .btn-danger:hover  { background:#dc2626; }
-        .btn-success { background:#22c55e; color:#ffffff; padding:8px 16px; border-radius:8px; font-weight:500; border:none; cursor:pointer; }
-        .btn-success:hover { background:#16a34a; }
-        .badge-critical { background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
-        .badge-moderate { background:#fef9c3; color:#a16207; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
-        .badge-stable   { background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sidebar-link:hover {
+            background: #374151;
+            color: #ffffff;
+        }
+
+        .sidebar-link.active {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f3f4f6;
+            padding: 24px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .badge-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-moderate {
+            background: #fef9c3;
+            color: #a16207;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-stable {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
 
         /* Sidebar transition */
-        #sidebar { width: 240px; transition: width 0.25s ease; overflow: hidden; flex-shrink: 0; }
-        #sidebar.collapsed { width: 64px; }
+        #sidebar {
+            width: 240px;
+            transition: width 0.25s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        #sidebar.collapsed {
+            width: 64px;
+        }
 
         /* Hide text labels when collapsed */
-        #sidebar.collapsed .nav-label { display: none; }
-        #sidebar.collapsed .sidebar-link { justify-content: center; padding: 10px; gap: 0; }
-        #sidebar.collapsed .brand-text { display: none; }
-        #sidebar.collapsed .user-info  { display: none; }
-        #sidebar.collapsed .logout-label { display: none; }
-        #sidebar.collapsed #toggle-btn { justify-content: center; }
+        #sidebar.collapsed .nav-label {
+            display: none;
+        }
+
+        #sidebar.collapsed .sidebar-link {
+            justify-content: center;
+            padding: 10px;
+            gap: 0;
+        }
+
+        #sidebar.collapsed .brand-text {
+            display: none;
+        }
+
+        #sidebar.collapsed .user-info {
+            display: none;
+        }
+
+        #sidebar.collapsed .logout-label {
+            display: none;
+        }
+
+        #sidebar.collapsed #toggle-btn {
+            justify-content: center;
+        }
 
         /* Tooltip on hover when collapsed */
-        #sidebar.collapsed .sidebar-link { position: relative; }
+        #sidebar.collapsed .sidebar-link {
+            position: relative;
+        }
+
         #sidebar.collapsed .sidebar-link:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -51,182 +170,272 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50 flex h-screen overflow-hidden">
 
-<!-- Sidebar -->
-<aside id="sidebar" class="bg-gray-900 flex flex-col h-full">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-gray-900 flex flex-col h-full">
 
-    <!-- Brand -->
-    <div class="p-4 border-b border-gray-700 flex items-center gap-3 min-h-[65px]">
-        <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-hospital text-white"></i>
-        </div>
-        <div class="brand-text overflow-hidden">
-            <h1 class="text-white font-bold text-base leading-none">AIHAS</h1>
-            <p class="text-gray-400 text-xs mt-0.5">Hospital AI System</p>
-        </div>
-    </div>
-
-    <!-- Toggle Button -->
-    <button id="toggle-btn" onclick="toggleSidebar()"
-        class="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-gray-700 transition-all text-sm border-b border-gray-700">
-        <i id="toggle-icon" class="fas fa-chevron-left text-xs flex-shrink-0"></i>
-        <span class="nav-label text-xs">Collapse Menu</span>
-    </button>
-
-    <!-- Nav Links -->
-    <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        <a href="/dashboard"    class="sidebar-link" data-page="dashboard"    data-tooltip="Dashboard">
-            <i class="fas fa-th-large flex-shrink-0"></i><span class="nav-label">Dashboard</span></a>
-        <a href="/patients"     class="sidebar-link" data-page="patients"     data-tooltip="Patients">
-            <i class="fas fa-procedures flex-shrink-0"></i><span class="nav-label">Patients</span></a>
-        <a href="/beds"         class="sidebar-link" data-page="beds"         data-tooltip="Bed Management">
-            <i class="fas fa-bed flex-shrink-0"></i><span class="nav-label">Bed Management</span></a>
-        <a href="/emergency"    class="sidebar-link" data-page="emergency"    data-tooltip="Emergency">
-            <i class="fas fa-ambulance flex-shrink-0"></i><span class="nav-label">Emergency</span></a>
-        <a href="/vitals"       class="sidebar-link" data-page="vitals"       data-tooltip="Vitals Monitor">
-            <i class="fas fa-heartbeat flex-shrink-0"></i><span class="nav-label">Vitals Monitor</span></a>
-        <a href="/pharmacy"     class="sidebar-link" data-page="pharmacy"     data-tooltip="Pharmacy">
-            <i class="fas fa-pills flex-shrink-0"></i><span class="nav-label">Pharmacy</span></a>
-        <a href="/appointments" class="sidebar-link" data-page="appointments" data-tooltip="Appointments">
-            <i class="fas fa-calendar-check flex-shrink-0"></i><span class="nav-label">Appointments</span></a>
-        <a href="/records"      class="sidebar-link" data-page="records"      data-tooltip="Medical Records">
-            <i class="fas fa-file-medical flex-shrink-0"></i><span class="nav-label">Medical Records</span></a>
-        <a href="/analytics"    class="sidebar-link" data-page="analytics"    data-tooltip="Analytics">
-            <i class="fas fa-chart-bar flex-shrink-0"></i><span class="nav-label">Analytics</span></a>
-    </nav>
-
-    <!-- User + Logout -->
-    <div class="p-3 border-t border-gray-700">
-        <div class="flex items-center gap-3 mb-2 px-1">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-user text-white text-xs"></i>
+        <!-- Brand -->
+        <div class="p-4 border-b border-gray-700 flex items-center gap-3 min-h-[65px]">
+            <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-hospital text-white"></i>
             </div>
-            <div class="user-info overflow-hidden">
-                <p id="sidebar-name" class="text-white text-sm font-medium truncate leading-none">Loading...</p>
-                <p id="sidebar-role" class="text-gray-400 text-xs capitalize mt-0.5"></p>
+            <div class="brand-text overflow-hidden">
+                <h1 class="text-white font-bold text-base leading-none">AIHAS</h1>
+                <p class="text-gray-400 text-xs mt-0.5">Hospital AI System</p>
             </div>
         </div>
-        <button onclick="logout()"
-            class="sidebar-link w-full text-left text-red-400 hover:text-red-300 hover:bg-red-900/20"
-            data-tooltip="Logout">
-            <i class="fas fa-sign-out-alt flex-shrink-0"></i>
-            <span class="logout-label nav-label">Logout</span>
+
+        <!-- Toggle Button -->
+        <button id="toggle-btn" onclick="toggleSidebar()"
+            class="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-gray-700 transition-all text-sm border-b border-gray-700">
+            <i id="toggle-icon" class="fas fa-chevron-left text-xs flex-shrink-0"></i>
+            <span class="nav-label text-xs">Collapse Menu</span>
         </button>
-    </div>
-</aside>
 
-<!-- Main Content -->
-<main class="flex-1 flex flex-col overflow-hidden">
-    <!-- Header -->
-    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-        <div>
-            <h2 id="page-title"    class="text-xl font-bold text-gray-800">Dashboard</h2>
-            <p id="page-subtitle"  class="text-sm text-gray-500">AI-powered hospital management</p>
+        <!-- Nav Links -->
+        <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
+            <a href="/dashboard" class="sidebar-link" data-page="dashboard" data-tooltip="Dashboard">
+                <i class="fas fa-th-large flex-shrink-0"></i><span class="nav-label">Dashboard</span></a>
+            <a href="/patients" class="sidebar-link" data-page="patients" data-tooltip="Patients">
+                <i class="fas fa-procedures flex-shrink-0"></i><span class="nav-label">Patients</span></a>
+            <a href="/beds" class="sidebar-link" data-page="beds" data-tooltip="Bed Management">
+                <i class="fas fa-bed flex-shrink-0"></i><span class="nav-label">Bed Management</span></a>
+            <a href="/emergency" class="sidebar-link" data-page="emergency" data-tooltip="Emergency">
+                <i class="fas fa-ambulance flex-shrink-0"></i><span class="nav-label">Emergency</span></a>
+            <a href="/vitals" class="sidebar-link" data-page="vitals" data-tooltip="Vitals Monitor">
+                <i class="fas fa-heartbeat flex-shrink-0"></i><span class="nav-label">Vitals Monitor</span></a>
+            <a href="/pharmacy" class="sidebar-link" data-page="pharmacy" data-tooltip="Pharmacy">
+                <i class="fas fa-pills flex-shrink-0"></i><span class="nav-label">Pharmacy</span></a>
+            <a href="/appointments" class="sidebar-link" data-page="appointments" data-tooltip="Appointments">
+                <i class="fas fa-calendar-check flex-shrink-0"></i><span class="nav-label">Appointments</span></a>
+            <a href="/records" class="sidebar-link" data-page="records" data-tooltip="Medical Records">
+                <i class="fas fa-file-medical flex-shrink-0"></i><span class="nav-label">Medical Records</span></a>
+            <a href="/analytics" class="sidebar-link" data-page="analytics" data-tooltip="Analytics">
+                <i class="fas fa-chart-bar flex-shrink-0"></i><span class="nav-label">Analytics</span></a>
+        </nav>
+
+        <!-- User + Logout -->
+        <div class="p-3 border-t border-gray-700">
+            <div class="flex items-center gap-3 mb-2 px-1">
+                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user text-white text-xs"></i>
+                </div>
+                <div class="user-info overflow-hidden">
+                    <p id="sidebar-name" class="text-white text-sm font-medium truncate leading-none">Loading...</p>
+                    <p id="sidebar-role" class="text-gray-400 text-xs capitalize mt-0.5"></p>
+                </div>
+            </div>
+            <button onclick="logout()"
+                class="sidebar-link w-full text-left text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                data-tooltip="Logout">
+                <i class="fas fa-sign-out-alt flex-shrink-0"></i>
+                <span class="logout-label nav-label">Logout</span>
+            </button>
         </div>
-        <div class="flex items-center gap-3">
-            <span id="alert-badge" class="hidden bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium">
-                <i class="fas fa-bell mr-1"></i><span id="alert-count">0</span> Alerts
-            </span>
-            <span class="text-sm text-gray-400 font-mono" id="current-time"></span>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+            <div>
+                <h2 id="page-title" class="text-xl font-bold text-gray-800">Dashboard</h2>
+                <p id="page-subtitle" class="text-sm text-gray-500">AI-powered hospital management</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="alert-badge" class="hidden bg-red-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+                    <i class="fas fa-bell mr-1"></i><span id="alert-count">0</span> Alerts
+                </span>
+                <span class="text-sm text-gray-400 font-mono" id="current-time"></span>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+            {% block content %}{% endblock %}
         </div>
-    </header>
+    </main>
 
-    <!-- Page Content -->
-    <div class="flex-1 overflow-y-auto p-6">
-        {% block content %}{% endblock %}
-    </div>
-</main>
+    <script>
+        const API = '';
+        let isLoggingOut = false;
+        function getToken() { return localStorage.getItem('aihas_token'); }
+        function getUser() { return JSON.parse(localStorage.getItem('aihas_user') || '{}'); }
 
-<script>
-const API = '';
-function getToken() { return localStorage.getItem('aihas_token'); }
-function getUser()  { return JSON.parse(localStorage.getItem('aihas_user') || '{}'); }
-
-async function logout() {
-    const token = getToken();
-    // Clear local storage immediately
-    localStorage.removeItem('aihas_token');
-    localStorage.removeItem('aihas_user');
-    // Tell server to clear DB session
-    if (token) {
-        try {
-            await fetch('/api/auth/logout', {
-                method:  'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type':  'application/json'
+        async function logout() {
+            if (isLoggingOut) return;
+            isLoggingOut = true;
+            const token = getToken();
+            // Clear local storage immediately
+            localStorage.removeItem('aihas_token');
+            localStorage.removeItem('aihas_user');
+            // Tell server to clear DB session
+            if (token) {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } catch (e) {
+                    console.log('Server logout failed but local session cleared');
                 }
-            });
-        } catch(e) {
-            console.log('Server logout failed but local session cleared');
+            }
+            window.location.href = '/login';
         }
-    }
-    window.location.href = '/login';
-}
 
-async function apiFetch(url, opts = {}) {
-    const token = getToken();
-    opts.headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...opts.headers
-    };
-    const res = await fetch(API + url, opts);
-    if (res.status === 401) { logout(); return null; }
-    return res.json();
-}
+        async function apiFetch(url, opts = {}) {
+            const token = getToken();
+            if (!token && !isLoggingOut) {
+                logout();
+                return null;
+            }
+            opts.headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...opts.headers
+            };
+            try {
+                const res = await fetch(API + url, opts);
+                if (res.status === 401) {
+                    if (!isLoggingOut) logout();
+                    return null;
+                }
+                const text = await res.text();
+                try {
+                    const json = JSON.parse(text);
+                    // Attach HTTP status so callers can detect errors
+                    if (json && typeof json === 'object') json._httpStatus = res.status;
+                    return json;
+                } catch (e) {
+                    console.error('Non-JSON response from', url, text);
+                    return null;
+                }
+            } catch (e) {
+                console.error('Fetch error:', url, e);
+                return null;
+            }
+        }
 
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const icon    = document.getElementById('toggle-icon');
-    sidebar.classList.toggle('collapsed');
-    const isCollapsed = sidebar.classList.contains('collapsed');
-    icon.className = isCollapsed
-        ? 'fas fa-chevron-right text-xs flex-shrink-0'
-        : 'fas fa-chevron-left text-xs flex-shrink-0';
-    localStorage.setItem('sidebar_collapsed', isCollapsed);
-}
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('collapsed');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            icon.className = isCollapsed
+                ? 'fas fa-chevron-right text-xs flex-shrink-0'
+                : 'fas fa-chevron-left text-xs flex-shrink-0';
+            localStorage.setItem('sidebar_collapsed', isCollapsed);
+        }
 
-function initPage() {
-    if (!getToken() && window.location.pathname !== '/login') {
-        window.location.href = '/login'; return;
-    }
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            const colors = { success: 'bg-green-600', error: 'bg-red-600', info: 'bg-blue-600' };
+            t.className = `fixed bottom-5 right-5 z-[9999] px-5 py-3 rounded-xl shadow-xl text-white text-sm font-medium animate-pulse`;
+            t.style.background = type === 'error' ? '#dc2626' : type === 'info' ? '#2563eb' : '#16a34a';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.4s'; }, 3000);
+            setTimeout(() => t.remove(), 3500);
+        }
+        window.showToast = showToast;
 
-    // Restore collapsed state
-    const wasCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
-    if (wasCollapsed) {
-        document.getElementById('sidebar').classList.add('collapsed');
-        document.getElementById('toggle-icon').className = 'fas fa-chevron-right text-xs flex-shrink-0';
-    }
+        window.validateVitalsAndSuggestEmergency = function (hr, bp, o2, temp) {
+            const dangerAlerts = [];
+            let maxSeverity = 'normal';
 
-    const user = getUser();
-    document.getElementById('sidebar-name').textContent = user.name || 'User';
-    document.getElementById('sidebar-role').textContent = user.role || '';
+            const escalate = (level) => {
+                const levels = { 'normal': 0, 'warning': 1, 'emergency': 2, 'strong_emergency': 3 };
+                if (levels[level] > levels[maxSeverity]) {
+                    maxSeverity = level;
+                }
+            };
 
-    const path = window.location.pathname.replace('/', '') || 'dashboard';
-    document.querySelectorAll('[data-page]').forEach(el => {
-        el.classList.toggle('active', el.dataset.page === path);
-    });
+            // Heart Rate Checks
+            if (hr) {
+                if (hr < 40 || hr > 140) { dangerAlerts.push(`Heart Rate (${hr} bpm) - Critical Deviation`); escalate('emergency'); }
+                else if (hr < 50 || hr > 120) { dangerAlerts.push(`Heart Rate (${hr} bpm) - Warning`); escalate('warning'); }
+            }
 
-    setInterval(() => {
-        document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
-    }, 1000);
-}
+            // BP Systolic Checks
+            if (bp) {
+                if (bp < 70 || bp > 200) { dangerAlerts.push(`BP Systolic (${bp}) - Severe Level`); escalate('emergency'); }
+                else if (bp < 90 || bp > 180) { dangerAlerts.push(`BP Systolic (${bp}) - Warning`); escalate('warning'); }
+            }
 
-async function loadAlertCount() {
-    const data = await apiFetch('/api/vitals/alerts/recent');
-    if (data && data.length > 0) {
-        document.getElementById('alert-badge').classList.remove('hidden');
-        document.getElementById('alert-count').textContent = data.length;
-    }
-}
+            // Oxygen Checks
+            if (o2) {
+                if (o2 < 70) { dangerAlerts.push(`Oxygen Level (${o2}%) - STRONGLY RECOMMEND EMERGENCY ESCALATION`); escalate('strong_emergency'); }
+                else if (o2 < 85) { dangerAlerts.push(`Oxygen Level (${o2}%) - SUGGEST EMERGENCY STATUS`); escalate('emergency'); }
+                else if (o2 < 90) { dangerAlerts.push(`Oxygen Level (${o2}%) - CRITICAL ALERT`); escalate('warning'); }
+                else if (o2 < 95) { dangerAlerts.push(`Oxygen Level (${o2}%) - LOW WARNING`); escalate('warning'); }
+            }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initPage();
-    loadAlertCount();
-});
-</script>
-{% block scripts %}{% endblock %}
+            // Temperature Checks
+            if (temp) {
+                if (temp > 40.0) { dangerAlerts.push(`Temperature (${temp}°C) - EMERGENCY RECOMMENDATION`); escalate('emergency'); }
+                else if (temp > 39.0 || temp < 35.0) { dangerAlerts.push(`Temperature (${temp}°C) - ALERT / WARNING`); escalate('warning'); }
+            }
+
+            return {
+                hasWarnings: dangerAlerts.length > 0,
+                maxSeverity: maxSeverity,
+                alerts: dangerAlerts
+            };
+        };
+
+        function initPage() {
+            if (!getToken() && window.location.pathname !== '/login') {
+                window.location.href = '/login'; return;
+            }
+
+            // Restore collapsed state
+            const wasCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (wasCollapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('toggle-icon').className = 'fas fa-chevron-right text-xs flex-shrink-0';
+            }
+
+            const user = getUser();
+            document.getElementById('sidebar-name').textContent = user.name || 'User';
+            document.getElementById('sidebar-role').textContent = user.role || '';
+
+            const path = window.location.pathname.replace('/', '') || 'dashboard';
+            document.querySelectorAll('[data-page]').forEach(el => {
+                el.classList.toggle('active', el.dataset.page === path);
+            });
+
+            setInterval(() => {
+                document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+            }, 1000);
+        }
+
+        async function loadAlertCount() {
+            const data = await apiFetch('/api/vitals/alerts/recent');
+            const badge = document.getElementById('alert-badge');
+            const countEl = document.getElementById('alert-count');
+            if (data && data.length > 0) {
+                badge.classList.remove('hidden');
+                countEl.textContent = data.length;
+            } else {
+                // No active alerts — hide badge and reset count
+                badge.classList.add('hidden');
+                countEl.textContent = '0';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initPage();
+            loadAlertCount();
+            // Refresh alert count every 30 seconds for real-time-ish updates
+            setInterval(loadAlertCount, 30000);
+        });
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
+
 </html>

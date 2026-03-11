@@ -67,41 +67,49 @@
 {% endblock %}
 {% block scripts %}
 <script>
-async function loadDashboard() {
-    const stats = await apiFetch('/api/analytics/dashboard');
-    if (!stats) return;
-    document.getElementById('stat-total').textContent     = stats.patients.total;
-    document.getElementById('stat-emergency').textContent = stats.patients.emergency;
-    document.getElementById('stat-beds').textContent      = stats.beds.free;
-    document.getElementById('stat-alerts').textContent    = stats.alerts.total;
+    async function loadDashboard() {
+        // Fetch both endpoints in parallel — analytics/dashboard for patient/alert stats,
+        // beds/stats for the accurate per-type breakdown needed by the bed chart.
+        const [stats, bedStats] = await Promise.all([
+            apiFetch('/api/analytics/dashboard'),
+            apiFetch('/api/beds/stats')
+        ]);
+        if (!stats) return;
+        document.getElementById('stat-total').textContent = stats.patients.total;
+        document.getElementById('stat-emergency').textContent = stats.patients.emergency;
+        document.getElementById('stat-beds').textContent = stats.beds.free;
+        document.getElementById('stat-alerts').textContent = stats.alerts.total;
 
-    new Chart(document.getElementById('patientChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Admitted', 'Emergency', 'Discharged'],
-            datasets: [{ data: [stats.patients.admitted, stats.patients.emergency, stats.patients.discharged],
-                backgroundColor: ['#3B82F6','#EF4444','#10B981'] }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-    });
+        new Chart(document.getElementById('patientChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Admitted', 'Emergency', 'Discharged'],
+                datasets: [{
+                    data: [stats.patients.admitted, stats.patients.emergency, stats.patients.discharged],
+                    backgroundColor: ['#3B82F6', '#EF4444', '#10B981']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
 
-    const bs = stats.beds.by_type || {};
-    new Chart(document.getElementById('bedChart'), {
-        type: 'bar',
-        data: {
-            labels: ['General','ICU','Emergency','Isolation'],
-            datasets: [
-                { label: 'Occupied', data: [bs.general?.occupied||0, bs.icu?.occupied||0, bs.emergency?.occupied||0, bs.isolation?.occupied||0], backgroundColor: '#EF4444' },
-                { label: 'Free',     data: [bs.general?.free||0,     bs.icu?.free||0,     bs.emergency?.free||0,     bs.isolation?.free||0],     backgroundColor: '#10B981' }
-            ]
-        },
-        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-    });
+        // Use by_type from /api/beds/stats (not analytics/dashboard which doesn't include it)
+        const bs = (bedStats && bedStats.by_type) || {};
+        new Chart(document.getElementById('bedChart'), {
+            type: 'bar',
+            data: {
+                labels: ['General', 'ICU', 'Emergency', 'Isolation'],
+                datasets: [
+                    { label: 'Occupied', data: [bs.general?.occupied || 0, bs.icu?.occupied || 0, bs.emergency?.occupied || 0, bs.isolation?.occupied || 0], backgroundColor: '#EF4444' },
+                    { label: 'Free', data: [bs.general?.free || 0, bs.icu?.free || 0, bs.emergency?.free || 0, bs.isolation?.free || 0], backgroundColor: '#10B981' }
+                ]
+            },
+            options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
 
-    const alerts = await apiFetch('/api/vitals/alerts/recent');
-    const list = document.getElementById('alerts-list');
-    if (alerts && alerts.length > 0) {
-        list.innerHTML = alerts.slice(0, 8).map(a => `
+        const alerts = await apiFetch('/api/vitals/alerts/recent');
+        const list = document.getElementById('alerts-list');
+        if (alerts && alerts.length > 0) {
+            list.innerHTML = alerts.slice(0, 8).map(a => `
             <div class="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
                 <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
                 <div>
@@ -110,12 +118,12 @@ async function loadDashboard() {
                     <p class="text-xs text-gray-400 mt-1">${new Date(a.recorded_at).toLocaleString()}</p>
                 </div>
             </div>`).join('');
-    } else {
-        list.innerHTML = '<p class="text-green-600 text-sm"><i class="fas fa-check-circle mr-2"></i>No active alerts</p>';
+        } else {
+            list.innerHTML = '<p class="text-green-600 text-sm"><i class="fas fa-check-circle mr-2"></i>No active alerts</p>';
+        }
     }
-}
-document.addEventListener('DOMContentLoaded', loadDashboard);
-document.getElementById('page-title').textContent    = 'Dashboard';
-document.getElementById('page-subtitle').textContent = 'AI-powered hospital overview';
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+    document.getElementById('page-title').textContent = 'Dashboard';
+    document.getElementById('page-subtitle').textContent = 'AI-powered hospital overview';
 </script>
 {% endblock %}

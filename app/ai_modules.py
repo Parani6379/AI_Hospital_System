@@ -1,22 +1,26 @@
-import numpy as np, os, joblib
+import os, joblib
 
 BASE = os.path.join(os.path.dirname(__file__), '..', 'ai_training', 'saved_models')
 
+def _load(name):
+    try:
+        return joblib.load(os.path.join(BASE, name))
+    except Exception:
+        return None
+
+
 class SeverityModel:
     def __init__(self):
-        try:
-            self.model = joblib.load(os.path.join(BASE, 'severity_model.pkl'))
-        except:
-            self.model = None
+        self.model = _load('severity_model.pkl')
 
     def predict(self, hr, bp, o2, temp, age):
         if self.model:
             try:
-                f = np.array([[hr, bp, o2, temp, age]])
-                return round(self.model.predict_proba(f)[0][1] * 100, 2)
-            except:
+                features = [[float(hr), float(bp), float(o2), float(temp), float(age)]]
+                return round(float(self.model.predict_proba(features)[0][1]) * 100, 2)
+            except Exception:
                 pass
-        # Rule-based fallback
+        # Rule-based fallback (no numpy needed)
         score = 0
         if hr > 120 or hr < 45:  score += 30
         elif hr > 100:            score += 15
@@ -37,17 +41,14 @@ class SeverityModel:
 
 class DischargePredictor:
     def __init__(self):
-        try:
-            self.model = joblib.load(os.path.join(BASE, 'discharge_model.pkl'))
-        except:
-            self.model = None
+        self.model = _load('discharge_model.pkl')
 
     def predict_days(self, severity, age, diag_code=1):
         if self.model:
             try:
-                f = np.array([[severity, age, diag_code]])
-                return max(1, int(round(self.model.predict(f)[0])))
-            except:
+                features = [[float(severity), float(age), float(diag_code)]]
+                return max(1, int(round(float(self.model.predict(features)[0]))))
+            except Exception:
                 pass
         if severity >= 75: return 14
         if severity >= 45: return 7
@@ -56,10 +57,7 @@ class DischargePredictor:
 
 class DemandForecaster:
     def __init__(self):
-        try:
-            self.model = joblib.load(os.path.join(BASE, 'demand_forecast_model.pkl'))
-        except:
-            self.model = None
+        self.model = _load('demand_forecast_model.pkl')
 
     def forecast_7days(self, recent_usage):
         if not recent_usage:
@@ -67,9 +65,10 @@ class DemandForecaster:
         avg = sum(recent_usage) / len(recent_usage)
         if self.model:
             try:
-                f = np.array([[len(recent_usage) + i, avg] for i in range(1, 8)])
-                return [max(0, int(p)) for p in self.model.predict(f)]
-            except:
+                features = [[len(recent_usage) + i, avg] for i in range(1, 8)]
+                preds = self.model.predict(features)
+                return [max(0, int(p)) for p in preds]
+            except Exception:
                 pass
         trend = (recent_usage[-1] - recent_usage[0]) / max(len(recent_usage), 1)
         return [max(0, int(avg + trend * i)) for i in range(1, 8)]
@@ -77,26 +76,23 @@ class DemandForecaster:
 
 class BurnoutDetector:
     def __init__(self):
-        try:
-            self.model = joblib.load(os.path.join(BASE, 'burnout_model.pkl'))
-        except:
-            self.model = None
+        self.model = _load('burnout_model.pkl')
 
     def predict_risk(self, avg_hours, avg_patients, overtime_days, total_days=30):
         if self.model:
             try:
-                f = np.array([[avg_hours, avg_patients, overtime_days, total_days]])
-                idx = int(self.model.predict(f)[0])
+                features = [[float(avg_hours), float(avg_patients), float(overtime_days), float(total_days)]]
+                idx = int(self.model.predict(features)[0])
                 return ['low', 'medium', 'high'][min(idx, 2)]
-            except:
+            except Exception:
                 pass
         score = 0
-        if avg_hours > 10:    score += 3
-        elif avg_hours > 8:   score += 1
-        if avg_patients > 20: score += 3
-        elif avg_patients > 15: score += 1
-        if overtime_days > 10:  score += 3
-        elif overtime_days > 5: score += 1
+        if avg_hours > 10:       score += 3
+        elif avg_hours > 8:      score += 1
+        if avg_patients > 20:    score += 3
+        elif avg_patients > 15:  score += 1
+        if overtime_days > 10:   score += 3
+        elif overtime_days > 5:  score += 1
         if score >= 6: return 'high'
         if score >= 3: return 'medium'
         return 'low'

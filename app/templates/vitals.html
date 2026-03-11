@@ -6,18 +6,26 @@
         <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-heartbeat text-red-500 mr-2"></i>Record Vitals</h3>
         <div class="space-y-3">
             <div><label class="block text-xs text-gray-600 mb-1">Patient ID</label>
-                <input id="v-pid" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1"></div>
+                <input id="v-pid" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="1">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Heart Rate (bpm)</label>
-                <input id="v-hr" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="75"></div>
+                <input id="v-hr" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="75">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">BP Systolic</label>
-                <input id="v-bps" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="120"></div>
+                <input id="v-bps" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="120">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">BP Diastolic</label>
-                <input id="v-bpd" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="80"></div>
+                <input id="v-bpd" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="80">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Oxygen Level (%)</label>
-                <input id="v-o2" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="98"></div>
+                <input id="v-o2" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="98">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Temperature (°C)</label>
-                <input id="v-temp" type="number" step="0.1" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="37.0"></div>
-            <button onclick="pushVitals()" class="btn-primary w-full"><i class="fas fa-paper-plane mr-2"></i>Record & Analyze</button>
+                <input id="v-temp" type="number" step="0.1" class="w-full border rounded-lg px-3 py-2 text-sm"
+                    placeholder="37.0">
+            </div>
+            <button onclick="pushVitals()" class="btn-primary w-full"><i class="fas fa-paper-plane mr-2"></i>Record &
+                Analyze</button>
         </div>
         <div id="v-result" class="hidden mt-4 p-3 rounded-lg bg-gray-50"></div>
     </div>
@@ -26,48 +34,100 @@
     <div class="card lg:col-span-2">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-gray-800"><i class="fas fa-bell text-orange-500 mr-2"></i>Recent Alerts</h3>
-            <button onclick="loadAlerts()" class="text-blue-600 text-sm"><i class="fas fa-sync mr-1"></i>Refresh</button>
+            <button id="refresh-btn" onclick="loadAlerts()"
+                class="text-blue-600 text-sm flex items-center gap-1 hover:text-blue-800 transition-colors">
+                <i id="refresh-icon" class="fas fa-sync mr-1"></i>Refresh
+            </button>
         </div>
         <div id="alerts-table" class="space-y-2 max-h-96 overflow-y-auto">
             <p class="text-gray-400 text-sm text-center py-4">Loading...</p>
         </div>
     </div>
 </div>
+<style>
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .spin {
+        animation: spin 0.7s linear infinite;
+    }
+</style>
 {% endblock %}
 {% block scripts %}
 <script>
-document.getElementById('page-title').textContent    = 'Vitals Monitor';
-document.getElementById('page-subtitle').textContent = 'Real-time IoT vital signs & alerts';
+    document.getElementById('page-title').textContent = 'Vitals Monitor';
+    document.getElementById('page-subtitle').textContent = 'Real-time IoT vital signs & alerts';
 
-async function pushVitals() {
-    const pid = document.getElementById('v-pid').value;
-    if (!pid) { alert('Enter patient ID'); return; }
-    const body = {
-        heart_rate:   +document.getElementById('v-hr').value   || null,
-        bp_systolic:  +document.getElementById('v-bps').value  || null,
-        bp_diastolic: +document.getElementById('v-bpd').value  || null,
-        oxygen_level: +document.getElementById('v-o2').value   || null,
-        temperature:  +document.getElementById('v-temp').value || null,
-    };
-    const res = await apiFetch(`/api/vitals/push/${pid}`, { method: 'POST', body: JSON.stringify(body) });
-    const div = document.getElementById('v-result');
-    div.classList.remove('hidden');
-    if (res && res.alerts && res.alerts.length > 0) {
-        div.innerHTML = `<p class="text-red-600 font-semibold text-sm mb-2">⚠️ ${res.alerts.length} Alert(s) Triggered!</p>` +
-            res.alerts.map(a => `<p class="text-xs text-red-500">${a.type}: ${a.value} (range ${a.min}–${a.max})</p>`).join('');
-        div.className = 'mt-4 p-3 rounded-lg bg-red-50 border border-red-200';
-    } else {
-        div.innerHTML = '<p class="text-green-600 text-sm"><i class="fas fa-check-circle mr-2"></i>Vitals recorded. All normal.</p>';
-        div.className = 'mt-4 p-3 rounded-lg bg-green-50 border border-green-200';
+    async function pushVitals() {
+        const pid = document.getElementById('v-pid').value;
+        if (!pid) { alert('Enter patient ID'); return; }
+
+        const hr = +document.getElementById('v-hr').value || null;
+        const bp = +document.getElementById('v-bps').value || null;
+        const o2 = +document.getElementById('v-o2').value || null;
+        const temp = +document.getElementById('v-temp').value || null;
+        const body = {
+            heart_rate: hr,
+            bp_systolic: bp,
+            bp_diastolic: +document.getElementById('v-bpd').value || null,
+            oxygen_level: o2,
+            temperature: temp,
+        };
+
+        const validation = window.validateVitalsAndSuggestEmergency(hr, bp, o2, temp);
+        if (validation.hasWarnings) {
+            let msg = "";
+            let confirmText = "Click OK to confirm recording.\nClick Cancel to review the entered values.";
+
+            if (validation.maxSeverity === 'strong_emergency') {
+                msg = `🚨 STRONGLY RECOMMEND EMERGENCY ESCALATION:\n\n- ${validation.alerts.join('\n- ')}\n\nThese vitals are extremely critical. Are you absolutely certain these values are correct?\n\n${confirmText}`;
+            } else if (validation.maxSeverity === 'emergency') {
+                msg = `⚠️ SUGGEST EMERGENCY STATUS:\n\n- ${validation.alerts.join('\n- ')}\n\nThese vitals indicate an emergency. Do you want to proceed with recording them?\n\n${confirmText}`;
+            } else {
+                msg = `⚠️ WARNING:\n\n- ${validation.alerts.join('\n- ')}\n\nAre you sure you want to record these abnormal vitals?\n\n${confirmText}`;
+            }
+
+            const proceed = confirm(msg);
+            if (!proceed) return;
+        }
+
+        const res = await apiFetch(`/api/vitals/push/${pid}`, { method: 'POST', body: JSON.stringify(body) });
+        const div = document.getElementById('v-result');
+        div.classList.remove('hidden');
+        if (res && res.alerts && res.alerts.length > 0) {
+            div.innerHTML = `<p class="text-red-600 font-semibold text-sm mb-2">⚠️ ${res.alerts.length} Alert(s) Triggered!</p>` +
+                res.alerts.map(a => `<p class="text-xs text-red-500">${a.type}: ${a.value} (range ${a.min}–${a.max})</p>`).join('');
+            div.className = 'mt-4 p-3 rounded-lg bg-red-50 border border-red-200';
+        } else {
+            div.innerHTML = '<p class="text-green-600 text-sm"><i class="fas fa-check-circle mr-2"></i>Vitals recorded. All normal.</p>';
+            div.className = 'mt-4 p-3 rounded-lg bg-green-50 border border-green-200';
+        }
+        loadAlerts();
+        // Sync the navbar alert badge immediately after recording new vitals
+        if (typeof loadAlertCount === 'function') loadAlertCount();
     }
-    loadAlerts();
-}
 
-async function loadAlerts() {
-    const data = await apiFetch('/api/vitals/alerts/recent');
-    const div  = document.getElementById('alerts-table');
-    if (!data || !data.length) { div.innerHTML = '<p class="text-green-600 text-sm text-center py-4"><i class="fas fa-check-circle mr-2"></i>No active alerts</p>'; return; }
-    div.innerHTML = data.map(a => `
+    async function loadAlerts() {
+        const icon = document.getElementById('refresh-icon');
+        const div = document.getElementById('alerts-table');
+        // Show spinner and loading state
+        if (icon) icon.classList.add('spin');
+        div.innerHTML = '<p class="text-gray-400 text-sm text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Refreshing alerts...</p>';
+        const data = await apiFetch('/api/vitals/alerts/recent');
+        if (icon) icon.classList.remove('spin');
+        if (!data) {
+            div.innerHTML = '<p class="text-red-500 text-sm text-center py-4"><i class="fas fa-exclamation-circle mr-2"></i>Failed to load alerts. Please try again.</p>';
+            return;
+        }
+        if (!data.length) { div.innerHTML = '<p class="text-green-600 text-sm text-center py-4"><i class="fas fa-check-circle mr-2"></i>No active alerts</p>'; return; }
+        div.innerHTML = data.map(a => `
         <div class="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg">
             <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 flex-shrink-0"></i>
             <div class="flex-1 min-w-0">
@@ -77,14 +137,14 @@ async function loadAlerts() {
                 </div>
                 <p class="text-xs text-red-600 mt-0.5">${a.alert_message || 'Abnormal vitals'}</p>
                 <div class="flex gap-3 mt-1 text-xs text-gray-500">
-                    ${a.heart_rate  ? `<span>HR: ${a.heart_rate}</span>` : ''}
-                    ${a.oxygen_level? `<span>O₂: ${a.oxygen_level}%</span>` : ''}
+                    ${a.heart_rate ? `<span>HR: ${a.heart_rate}</span>` : ''}
+                    ${a.oxygen_level ? `<span>O₂: ${a.oxygen_level}%</span>` : ''}
                     ${a.temperature ? `<span>Temp: ${a.temperature}°C</span>` : ''}
                 </div>
             </div>
         </div>`).join('');
-}
+    }
 
-document.addEventListener('DOMContentLoaded', loadAlerts);
+    document.addEventListener('DOMContentLoaded', loadAlerts);
 </script>
 {% endblock %}

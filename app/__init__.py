@@ -1,9 +1,10 @@
 from flask import Flask
 from .database import init_db
+import os
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
-    app.config['SECRET_KEY'] = 'aihas_dev_secret_2024'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'aihas_dev_secret_2024')
 
     @app.after_request
     def add_cors(response):

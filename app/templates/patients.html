@@ -2,10 +2,14 @@
 {% block content %}
 <div class="flex items-center justify-between mb-6">
     <div class="flex gap-2">
-        <button onclick="filterPatients('all')"       id="f-all"       class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">All</button>
-        <button onclick="filterPatients('admitted')"  id="f-admitted"  class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Admitted</button>
-        <button onclick="filterPatients('emergency')" id="f-emergency" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Emergency</button>
-        <button onclick="filterPatients('discharged')"id="f-discharged"class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Discharged</button>
+        <button onclick="filterPatients('all')" id="f-all"
+            class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">All</button>
+        <button onclick="filterPatients('admitted')" id="f-admitted"
+            class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Admitted</button>
+        <button onclick="filterPatients('emergency')" id="f-emergency"
+            class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Emergency</button>
+        <button onclick="filterPatients('discharged')" id="f-discharged"
+            class="px-4 py-2 rounded-lg bg-gray-200 text-gray-600 text-sm font-medium">Discharged</button>
     </div>
     <button onclick="openAddModal()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Add Patient</button>
 </div>
@@ -25,7 +29,9 @@
                 </tr>
             </thead>
             <tbody id="patients-tbody">
-                <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Loading...</td></tr>
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-400">Loading...</td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -36,62 +42,99 @@
     <div class="bg-white rounded-2xl w-full max-w-lg max-h-screen overflow-y-auto p-6">
         <div class="flex items-center justify-between mb-5">
             <h3 class="text-lg font-bold text-gray-800">Add New Patient</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i
+                    class="fas fa-times text-xl"></i></button>
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div class="col-span-2"><label class="block text-xs font-medium text-gray-600 mb-1">Full Name *</label>
-                <input id="p-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Patient name"></div>
+                <input id="p-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="Patient name">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Age</label>
-                <input id="p-age" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="35"></div>
+                <input id="p-age" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="35">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Gender</label>
                 <select id="p-gender" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option>Male</option><option>Female</option><option>Other</option></select></div>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Blood Group</label>
                 <select id="p-blood" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
-                    <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+                    <option>A+</option>
+                    <option>A-</option>
+                    <option>B+</option>
+                    <option>B-</option>
+                    <option>O+</option>
+                    <option>O-</option>
+                    <option>AB+</option>
+                    <option>AB-</option>
+                </select>
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
                 <select id="p-status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option>admitted</option><option>emergency</option></select></div>
+                    <option>admitted</option>
+                    <option>emergency</option>
+                </select>
+            </div>
             <div class="col-span-2"><label class="block text-xs font-medium text-gray-600 mb-1">Diagnosis</label>
-                <input id="p-diag" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Primary diagnosis"></div>
+                <input id="p-diag" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="Primary diagnosis">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Heart Rate</label>
-                <input id="p-hr" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="75"></div>
+                <input id="p-hr" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="75">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">BP Systolic</label>
-                <input id="p-bp" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="120"></div>
+                <input id="p-bp" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="120">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Oxygen Level</label>
-                <input id="p-o2" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="98"></div>
+                <input id="p-o2" type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="98">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Temperature °C</label>
-                <input id="p-temp" type="number" step="0.1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="37.0"></div>
+                <input id="p-temp" type="number" step="0.1"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="37.0">
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Infection Risk</label>
                 <select id="p-inf" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option>low</option><option>medium</option><option>high</option></select></div>
+                    <option>low</option>
+                    <option>medium</option>
+                    <option>high</option>
+                </select>
+            </div>
             <div><label class="block text-xs font-medium text-gray-600 mb-1">Contact</label>
-                <input id="p-contact" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Phone"></div>
+                <input id="p-contact" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    placeholder="Phone">
+            </div>
         </div>
         <div class="flex gap-3 mt-5">
             <button onclick="submitPatient()" class="btn-primary flex-1">
                 <i class="fas fa-save mr-2"></i>Save Patient</button>
-            <button onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Cancel</button>
+            <button onclick="closeModal()"
+                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">Cancel</button>
         </div>
     </div>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
-let currentFilter = 'all';
-document.getElementById('page-title').textContent    = 'Patient Management';
-document.getElementById('page-subtitle').textContent = 'AI severity scoring & discharge prediction';
+    let currentFilter = 'all';
+    document.getElementById('page-title').textContent = 'Patient Management';
+    document.getElementById('page-subtitle').textContent = 'AI severity scoring & discharge prediction';
 
-async function loadPatients(status) {
-    const url = status && status !== 'all' ? `/api/patients?status=${status}` : '/api/patients';
-    const data = await apiFetch(url);
-    const tbody = document.getElementById('patients-tbody');
-    if (!data || !data.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No patients found</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = data.map(p => `
+    async function loadPatients(status) {
+        const url = status && status !== 'all' ? `/api/patients?status=${status}` : '/api/patients';
+        const data = await apiFetch(url);
+        const tbody = document.getElementById('patients-tbody');
+        if (!data || !data.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No patients found</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = data.map(p => `
         <tr class="border-b border-gray-100 hover:bg-gray-50">
             <td class="px-4 py-3">
                 <p class="font-medium text-gray-800">${p.name}</p>
@@ -103,62 +146,116 @@ async function loadPatients(status) {
                 <span class="badge-${p.severity_label}">${p.severity_label} (${p.severity_score})</span>
             </td>
             <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded-full text-xs font-semibold ${p.status==='emergency'?'bg-red-100 text-red-700':p.status==='admitted'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-600'}">
+                <span class="px-2 py-1 rounded-full text-xs font-semibold ${p.status === 'emergency' ? 'bg-red-100 text-red-700' : p.status === 'admitted' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}">
                     ${p.status}</span>
             </td>
-            <td class="px-4 py-3 text-gray-600">${p.predicted_discharge_days ? p.predicted_discharge_days+' days' : '—'}</td>
+            <td class="px-4 py-3 text-gray-600">${p.predicted_discharge_days ? p.predicted_discharge_days + ' days' : '—'}</td>
             <td class="px-4 py-3">
                 <button onclick="allocateBed(${p.id})" class="text-blue-600 hover:text-blue-800 text-xs mr-2" title="Allocate Bed"><i class="fas fa-bed"></i></button>
                 <button onclick="deletePatient(${p.id})" class="text-red-500 hover:text-red-700 text-xs" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`).join('');
-}
+    }
 
-function filterPatients(f) {
-    currentFilter = f;
-    ['all','admitted','emergency','discharged'].forEach(k => {
-        const btn = document.getElementById(`f-${k}`);
-        btn.className = `px-4 py-2 rounded-lg text-sm font-medium ${k===f?'bg-blue-600 text-white':'bg-gray-200 text-gray-600'}`;
-    });
-    loadPatients(f);
-}
+    function filterPatients(f) {
+        currentFilter = f;
+        ['all', 'admitted', 'emergency', 'discharged'].forEach(k => {
+            const btn = document.getElementById(`f-${k}`);
+            btn.className = `px-4 py-2 rounded-lg text-sm font-medium ${k === f ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`;
+        });
+        loadPatients(f);
+    }
 
-function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
-function closeModal()   { document.getElementById('add-modal').classList.add('hidden'); }
+    function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+    function closeModal() { document.getElementById('add-modal').classList.add('hidden'); }
 
-async function submitPatient() {
-    const name = document.getElementById('p-name').value.trim();
-    if (!name) { alert('Name is required'); return; }
-    const body = {
-        name, age: +document.getElementById('p-age').value || 40,
-        gender: document.getElementById('p-gender').value,
-        blood_group: document.getElementById('p-blood').value,
-        status: document.getElementById('p-status').value,
-        diagnosis: document.getElementById('p-diag').value,
-        heart_rate:   +document.getElementById('p-hr').value   || 75,
-        bp_systolic:  +document.getElementById('p-bp').value   || 120,
-        oxygen_level: +document.getElementById('p-o2').value   || 98,
-        temperature:  +document.getElementById('p-temp').value || 37.0,
-        infection_risk: document.getElementById('p-inf').value,
-        contact: document.getElementById('p-contact').value,
-    };
-    const res = await apiFetch('/api/patients', { method: 'POST', body: JSON.stringify(body) });
-    if (res && res.id) { closeModal(); loadPatients(currentFilter); }
-}
+    async function submitPatient() {
+        const name = document.getElementById('p-name').value.trim();
+        if (!name) { alert('Name is required'); return; }
 
-async function allocateBed(pid) {
-    const res = await apiFetch(`/api/beds/allocate/${pid}`, { method: 'POST' });
-    if (res && res.bed) alert(`✅ Bed ${res.bed.bed_number} allocated! Est. discharge: ${res.predicted_discharge_days} days`);
-    else alert(res?.error || 'Allocation failed');
-    loadPatients(currentFilter);
-}
+        let status = document.getElementById('p-status').value;
+        const hr = +document.getElementById('p-hr').value || 75;
+        const bp = +document.getElementById('p-bp').value || 120;
+        const o2 = +document.getElementById('p-o2').value || 98;
+        const temp = +document.getElementById('p-temp').value || 37.0;
 
-async function deletePatient(pid) {
-    if (!confirm('Delete this patient?')) return;
-    await apiFetch(`/api/patients/${pid}`, { method: 'DELETE' });
-    loadPatients(currentFilter);
-}
+        const validation = window.validateVitalsAndSuggestEmergency(hr, bp, o2, temp);
 
-document.addEventListener('DOMContentLoaded', () => loadPatients('all'));
+        if (validation.hasWarnings && status === 'admitted') {
+            let msg = "";
+            if (validation.maxSeverity === 'strong_emergency') {
+                msg = `🚨 STRONGLY RECOMMEND EMERGENCY ESCALATION:\n\n- ${validation.alerts.join('\n- ')}\n\nVitals are critically unstable. You are strongly advised to escalate to emergency status.\n\nClick OK to escalate to 'emergency'.\nClick Cancel to override and keep as 'admitted'.`;
+            } else if (validation.maxSeverity === 'emergency') {
+                msg = `⚠️ SUGGEST EMERGENCY STATUS:\n\n- ${validation.alerts.join('\n- ')}\n\nDo you want to change the patient's status to 'emergency' based on these medical indicators?\n\nClick OK to escalate to 'emergency'.\nClick Cancel to override and keep as 'admitted'.`;
+            } else {
+                msg = `⚠️ WARNING:\n\n- ${validation.alerts.join('\n- ')}\n\nPatient has abnormal vitals. Do you want to consider changing their status to 'emergency'?\n\nClick OK to escalate to 'emergency'.\nClick Cancel to override and keep as 'admitted'.`;
+            }
+
+            const suggestEmergency = confirm(msg);
+
+            if (suggestEmergency) {
+                status = 'emergency';
+            }
+        }
+
+        const body = {
+            name, age: +document.getElementById('p-age').value || 40,
+            gender: document.getElementById('p-gender').value,
+            blood_group: document.getElementById('p-blood').value,
+            status: status,
+            diagnosis: document.getElementById('p-diag').value,
+            heart_rate: hr,
+            bp_systolic: bp,
+            oxygen_level: o2,
+            temperature: temp,
+            infection_risk: document.getElementById('p-inf').value,
+            contact: document.getElementById('p-contact').value,
+        };
+        const res = await apiFetch('/api/patients', { method: 'POST', body: JSON.stringify(body) });
+        if (res && res.id) { closeModal(); loadPatients(currentFilter); }
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-lg text-white text-sm font-medium transition-all ${type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+            }`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+
+    async function allocateBed(pid) {
+        const res = await apiFetch(`/api/beds/allocate/${pid}`, { method: 'POST' });
+        if (res && res.bed) {
+            showToast(`✅ Bed ${res.bed.bed_number} (${res.bed.bed_type}) allocated! Est. discharge: ${res.predicted_discharge_days} days`);
+        } else if (res && res.error) {
+            showToast('⚠️ ' + res.error, 'error');
+        } else {
+            showToast('Allocation failed — no beds available', 'error');
+        }
+        loadPatients(currentFilter);
+    }
+
+    async function deletePatient(pid) {
+        if (!confirm('Delete this patient? This will also remove all their vitals, records, and appointments.')) return;
+        try {
+            const token = getToken();
+            const resp = await fetch(`/api/patients/${pid}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+                showToast('Delete failed: ' + (data.error || `HTTP ${resp.status}`), 'error');
+            } else {
+                showToast('Patient deleted successfully');
+            }
+        } catch (e) {
+            showToast('Delete failed: network error', 'error');
+        }
+        loadPatients(currentFilter);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadPatients('all'));
 </script>
 {% endblock %}

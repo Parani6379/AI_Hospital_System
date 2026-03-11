@@ -3,23 +3,36 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Triage -->
     <div class="card">
-        <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-first-aid text-red-500 mr-2"></i>AI Triage Assessment</h3>
+        <h3 class="font-bold text-gray-800 mb-4"><i class="fas fa-first-aid text-red-500 mr-2"></i>AI Triage Assessment
+        </h3>
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div><label class="block text-xs text-gray-600 mb-1">Age</label>
-                <input id="e-age" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="45" value="45"></div>
+                <input id="e-age" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="45"
+                    value="45">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Heart Rate</label>
-                <input id="e-hr" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="75" value="75"></div>
+                <input id="e-hr" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="75"
+                    value="75">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">BP Systolic</label>
-                <input id="e-bp" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="120" value="120"></div>
+                <input id="e-bp" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="120"
+                    value="120">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Oxygen Level (%)</label>
-                <input id="e-o2" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="98" value="98"></div>
+                <input id="e-o2" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="98"
+                    value="98">
+            </div>
             <div><label class="block text-xs text-gray-600 mb-1">Temperature °C</label>
-                <input id="e-temp" type="number" step="0.1" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="37.0" value="37.0"></div>
+                <input id="e-temp" type="number" step="0.1" class="w-full border rounded-lg px-3 py-2 text-sm"
+                    placeholder="37.0" value="37.0">
+            </div>
         </div>
-        <button onclick="assess()" class="btn-primary w-full"><i class="fas fa-robot mr-2"></i>Run AI Assessment</button>
+        <button onclick="assess()" class="btn-primary w-full"><i class="fas fa-robot mr-2"></i>Run AI
+            Assessment</button>
         <div id="result" class="hidden mt-4 p-4 rounded-xl border-2">
             <div class="flex items-center gap-3 mb-3">
-                <div id="r-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-xl text-white font-bold"></div>
+                <div id="r-icon"
+                    class="w-12 h-12 rounded-full flex items-center justify-center text-xl text-white font-bold"></div>
                 <div>
                     <p class="font-bold text-lg" id="r-label"></p>
                     <p class="text-sm text-gray-500">Score: <span id="r-score" class="font-semibold"></span>/100</p>
@@ -44,41 +57,66 @@
 {% endblock %}
 {% block scripts %}
 <script>
-document.getElementById('page-title').textContent    = 'Emergency';
-document.getElementById('page-subtitle').textContent = 'AI triage & priority routing';
+    document.getElementById('page-title').textContent = 'Emergency';
+    document.getElementById('page-subtitle').textContent = 'AI triage & priority routing';
 
-async function assess() {
-    const body = {
-        age: +document.getElementById('e-age').value,
-        heart_rate:   +document.getElementById('e-hr').value,
-        bp_systolic:  +document.getElementById('e-bp').value,
-        oxygen_level: +document.getElementById('e-o2').value,
-        temperature:  +document.getElementById('e-temp').value,
-    };
-    const res = await apiFetch('/api/emergency/assess', { method: 'POST', body: JSON.stringify(body) });
-    if (!res) return;
-    const colors = { critical: '#EF4444', moderate: '#F59E0B', stable: '#10B981' };
-    const icons  = { critical: '🚨', moderate: '⚠️', stable: '✅' };
-    const div = document.getElementById('result');
-    div.classList.remove('hidden');
-    div.style.borderColor = colors[res.label];
-    document.getElementById('r-icon').style.backgroundColor = colors[res.label];
-    document.getElementById('r-icon').textContent = icons[res.label];
-    document.getElementById('r-label').textContent  = res.label.toUpperCase();
-    document.getElementById('r-score').textContent  = res.score;
-    document.getElementById('r-action').textContent = res.route.action;
-    document.getElementById('r-ward').textContent   = res.route.ward;
-}
+    async function assess() {
+        const hr = +document.getElementById('e-hr').value;
+        const bp = +document.getElementById('e-bp').value;
+        const o2 = +document.getElementById('e-o2').value;
+        const temp = +document.getElementById('e-temp').value;
 
-async function loadQueue() {
-    const data = await apiFetch('/api/emergency/queue');
-    const list = document.getElementById('queue-list');
-    if (!data || !data.length) { list.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">No active cases</p>'; return; }
-    list.innerHTML = data.map((p, i) => `
+        // Front-end pre-triage global validation checks
+        const validation = window.validateVitalsAndSuggestEmergency(hr, bp, o2, temp);
+        if (validation.hasWarnings) {
+            let msg = "";
+            let confirmText = "Click OK to proceed with triage assessment.\nClick Cancel to review the entered values.";
+
+            if (validation.maxSeverity === 'strong_emergency') {
+                msg = `🚨 EXTREME VITALS DETECTED:\n\n- ${validation.alerts.join('\n- ')}\n\nThese vitals are life-threatening. Proceed with triage assessment?\n\n${confirmText}`;
+            } else if (validation.maxSeverity === 'emergency') {
+                msg = `⚠️ SEVERE VITALS DETECTED:\n\n- ${validation.alerts.join('\n- ')}\n\nDo you want to proceed with triage assessment?\n\n${confirmText}`;
+            } else {
+                msg = `⚠️ ABNORMAL VITALS:\n\n- ${validation.alerts.join('\n- ')}\n\nAre you sure you want to assess these vitals?\n\n${confirmText}`;
+            }
+
+            const proceed = confirm(msg);
+            if (!proceed) return;
+        }
+
+        const body = {
+            age: +document.getElementById('e-age').value,
+            heart_rate: hr,
+            bp_systolic: bp,
+            oxygen_level: o2,
+            temperature: temp,
+        };
+        const res = await apiFetch('/api/emergency/assess', { method: 'POST', body: JSON.stringify(body) });
+        if (!res) return;
+        const colors = { critical: '#EF4444', moderate: '#F59E0B', stable: '#10B981' };
+        const icons = { critical: '🚨', moderate: '⚠️', stable: '✅' };
+        const div = document.getElementById('result');
+        div.classList.remove('hidden');
+        div.style.borderColor = colors[res.label];
+        document.getElementById('r-icon').style.backgroundColor = colors[res.label];
+        document.getElementById('r-icon').textContent = icons[res.label];
+        document.getElementById('r-label').textContent = res.label.toUpperCase();
+        document.getElementById('r-score').textContent = res.score;
+        document.getElementById('r-action').textContent = res.route.action;
+        document.getElementById('r-ward').textContent = res.route.ward;
+        // Refresh queue after assessment
+        loadQueue();
+    }
+
+    async function loadQueue() {
+        const data = await apiFetch('/api/emergency/queue');
+        const list = document.getElementById('queue-list');
+        if (!data || !data.length) { list.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">No active cases</p>'; return; }
+        list.innerHTML = data.map((p, i) => `
         <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold
-                ${p.severity_label==='critical'?'bg-red-500':p.severity_label==='moderate'?'bg-yellow-500':'bg-green-500'}">
-                ${i+1}</div>
+                ${p.severity_label === 'critical' ? 'bg-red-500' : p.severity_label === 'moderate' ? 'bg-yellow-500' : 'bg-green-500'}">
+                ${i + 1}</div>
             <div class="flex-1">
                 <p class="font-medium text-gray-800 text-sm">${p.name}</p>
                 <p class="text-xs text-gray-500">${p.diagnosis || 'No diagnosis'}</p>
@@ -88,8 +126,8 @@ async function loadQueue() {
                 <p class="text-xs text-gray-400 mt-1">${p.severity_score}</p>
             </div>
         </div>`).join('');
-}
+    }
 
-document.addEventListener('DOMContentLoaded', loadQueue);
+    document.addEventListener('DOMContentLoaded', loadQueue);
 </script>
 {% endblock %}
